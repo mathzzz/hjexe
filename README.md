@@ -7,6 +7,8 @@ install gcc
 install ld
 
 mkfifo /tmp/log.p
+# exec ${MYFD} <> /tmp/log.p
+# cat /tmp/log.p
 
 
 #term 1
