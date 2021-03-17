@@ -9,16 +9,18 @@
 #define MIN(a, b) ((a<b) ? (a) : (b))
 #define ENV_LINE_MAXLEN 4096
 #define ENV_FILE_MAXSIZE   (1024*1024)
-#define ENV_DIFF_BUF  (1024*16)
+#define PRINT_BUF_SIZE  (1024*64)
+#define ENV_MAPBUF_SIZE  (1024*32)
 #define EXE_SUFFIX   ".raw"   /* /bin/ping.raw*/
 #define ENV_FILE     "/tmp/.env"
 
 
 static inline int 
-str_ncat(char *buf, size_t bufsize, char *chip, size_t chip_size)
+str_ncat(char *buf, size_t bufsize, char *chip)
 {
 	int len = 0;
-	if(chip_size < bufsize-1 ) {
+	int chip_size = strlen(chip);
+	if(chip_size+1 < bufsize && bufsize > 0) {
 		strcat(buf, chip);
 		len = chip_size;
 	}
@@ -27,6 +29,7 @@ str_ncat(char *buf, size_t bufsize, char *chip, size_t chip_size)
 
 static char envmap[16 * 1024];
 
+static char envbuf[PRINT_BUF_SIZE]; 
 int 
 hjexe_env_quick_search(char *env)
 {
@@ -51,11 +54,15 @@ hjexe_print_diff_args(int argc, char **argv, char * const *envp)
 	ssize_t size, hjlen;	
 	struct stat buf;
 	int i,fd, len; 
-	char envbuf[ENV_DIFF_BUF];
-	
+	time_t cur;
 	fd = open(ENV_FILE, O_RDONLY|O_CLOEXEC);
 	if(-1 == fd)
 		return;
+
+	int fd_fifo = open("/tmp/log.fifo", O_RDWR|O_CLOEXEC);
+	if(-1 == fd)
+		return;
+
 
 	fstat(fd, &buf);
 	if(buf.st_size > sizeof(envmap))
@@ -65,23 +72,26 @@ hjexe_print_diff_args(int argc, char **argv, char * const *envp)
 	if(size == -1)
 		return;
 
-	len = 0;
-	len += snprintf(envbuf, sizeof(envbuf), "### cur=%9d, cli:ppid=%5d, pid=%5d\n",
+	cur = time(NULL);
+	len = snprintf(envbuf, sizeof(envbuf), "### cur=%9ld, cli:ppid=%5d, pid=%5d\n",
 			time(NULL), getppid(), getpid());
 
 	for(i=0; envp[i]; i++){
 		if(0 == hjexe_env_quick_search(envp[i]) && memcmp((envp[i]),"_=", 2) ){
-			len += snprintf(envbuf+len, sizeof(envbuf)-len, "export %s\n", envp[i]);
+			len += snprintf(envbuf+len, sizeof(envbuf)-len, "%s\n", envp[i]);
 		}	
 	}
 	
-	len += snprintf(envbuf + len, sizeof(envbuf)-len, "cd %s; ", getenv("PWD") ?: "");
+	len += snprintf(envbuf + len, sizeof(envbuf)-len, "echo %9ld; cd %s; ", cur, getenv("PWD") ?: "");
 	for(i=0; i<argc; i++) {
-		len += snprintf(envbuf+len, sizeof(envbuf)-len, "\"%s\" ", argv[i]);
+		len += snprintf(envbuf+len, sizeof(envbuf)-len, "%s ", argv[i]);
 	}
-	
-	fprintf(stderr, "%s\n\n", envbuf);
+	len += str_ncat(envbuf+len, sizeof(envbuf)-len, "\n\n");
+
+	size = write(fd_fifo, envbuf, len);
+
 	close(fd);
+	close(fd_fifo);
 
 	return;
 }
@@ -105,10 +115,10 @@ exehj_is_open(char *exename)
 	int len = 0; 
 	char *home = getenv("HOME") ?: "/tmp";
 
-	len += str_ncat(buf+len, sizeof(buf)-len, home,    strlen(home));
-	len += str_ncat(buf+len, sizeof(buf)-len, "/.hj/",  strlen(".hj/"));
-	len += str_ncat(buf+len, sizeof(buf)-len, exename, strlen(exename));
-	len += str_ncat(buf+len, sizeof(buf)-len, ".open", strlen(".open"));
+	len += str_ncat(buf+len, sizeof(buf)-len, home);
+	len += str_ncat(buf+len, sizeof(buf)-len, "/.hj/");
+	len += str_ncat(buf+len, sizeof(buf)-len, exename);
+	len += str_ncat(buf+len, sizeof(buf)-len, ".open");
 
 	if(0 == access(buf, F_OK))
 		return 1;
@@ -122,6 +132,11 @@ int main(int argc, char **argv, char **envp)
 	int len;
 	char buf[256];
 	char *exename = getexename(argv[0]);
+	if(0 == strcmp("hjexe", exename)){
+		fprintf(stderr, "install cmd1,cmd2,...\n\n");
+		return 0;
+	}
+	
 
 	if(exehj_is_open(exename)) {
 		unsetenv("LS_COLORS");
@@ -129,12 +144,13 @@ int main(int argc, char **argv, char **envp)
 	}	
 
 	if(argv[0][0] == '/' || argv[0][0] == '.') {
-		execve(argv[0], argv, envp);
+		len = str_ncat(buf, sizeof(buf), argv[0]);
 	} else {
 		len = readlink("/proc/self/exe", buf, sizeof(buf));
-		len += str_ncat(buf+len, sizeof(buf)-len, EXE_SUFFIX, strlen(EXE_SUFFIX));
-		execve(buf, argv, envp); 
 	}
+	len += str_ncat(buf+len, sizeof(buf)-len, EXE_SUFFIX);
+
+	execve(buf, argv, envp);
 
 	return 0;
 }

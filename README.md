@@ -3,10 +3,8 @@ hijacke execute program
 
 make
 
-sudo make install gcc
-sudo make install ld
-sudo make install bash
-sudo make install sh 
+install gcc
+install ld
 
 mkfifo /tmp/log.p
 
