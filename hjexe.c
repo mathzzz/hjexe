@@ -16,12 +16,12 @@
 
 
 static inline int 
-str_ncat(char *buf, size_t bufsize, char *chip)
+sncat(char *buf, size_t bufsize, char *chip)
 {
 	int len = 0;
 	int chip_size = strlen(chip);
 	if(chip_size+1 < bufsize && bufsize > 0) {
-		strcat(buf, chip);
+        strncpy(buf, chip, chip_size+1);
 		len = chip_size;
 	}
 	return len;
@@ -63,7 +63,6 @@ hjexe_print_diff_args(int argc, char **argv, char * const *envp)
 	if(-1 == fd)
 		return;
 
-
 	fstat(fd, &buf);
 	if(buf.st_size > sizeof(envmap))
 		return;
@@ -86,7 +85,8 @@ hjexe_print_diff_args(int argc, char **argv, char * const *envp)
 	for(i=0; i<argc; i++) {
 		len += snprintf(envbuf+len, sizeof(envbuf)-len, "%s ", argv[i]);
 	}
-	len += str_ncat(envbuf+len, sizeof(envbuf)-len, "\n\n");
+
+	len += sncat(envbuf+len, sizeof(envbuf)-len, "\n\n");
 
 	size = write(fd_fifo, envbuf, len);
 
@@ -115,10 +115,10 @@ exehj_is_open(char *exename)
 	int len = 0; 
 	char *home = getenv("HOME") ?: "/tmp";
 
-	len += str_ncat(buf+len, sizeof(buf)-len, home);
-	len += str_ncat(buf+len, sizeof(buf)-len, "/.hj/");
-	len += str_ncat(buf+len, sizeof(buf)-len, exename);
-	len += str_ncat(buf+len, sizeof(buf)-len, ".open");
+	len += sncat(buf+len, sizeof(buf)-len, home);
+	len += sncat(buf+len, sizeof(buf)-len, "/.hj/");
+	len += sncat(buf+len, sizeof(buf)-len, exename);
+	len += sncat(buf+len, sizeof(buf)-len, ".open");
 
 	if(0 == access(buf, F_OK))
 		return 1;
@@ -126,32 +126,57 @@ exehj_is_open(char *exename)
 	return 0;
 }
 
+char *hj_find_command_in_path(char *name)
+{
+    static char buf[512];
+    char *path = getenv("PATH");
+    char *p1, *p2 = NULL;
+    size_t len;
+
+    if(NULL == path)
+        return NULL;
+
+    for(p1 = path; p2=strchr(p1, ':'); p1=p2+1) {
+        len = p2 - p1;
+        if(len > 0 && len < sizeof(buf)) {
+            memcpy(buf, p1, len);
+            buf[len] = '/';
+            sncat(buf+len+1, sizeof(buf)-len-1,  name);
+            if(0 ==  access(buf, X_OK))
+                return buf;
+        }
+    }
+
+    return NULL;
+}
 
 int main(int argc, char **argv, char **envp)
 {
 	int len;
 	char buf[256];
 	char *exename = getexename(argv[0]);
+    char *fullpath;
 	if(0 == strcmp("hjexe", exename)){
 		fprintf(stderr, "install cmd1,cmd2,...\n\n");
 		return 0;
 	}
 	
-
 	if(exehj_is_open(exename)) {
 		unsetenv("LS_COLORS");
 		hjexe_print_diff_args(argc, argv, envp);
 	}	
 
-	if(argv[0][0] == '/' || argv[0][0] == '.') {
-		len = str_ncat(buf, sizeof(buf), argv[0]);
-	} else {
-		len = readlink("/proc/self/exe", buf, sizeof(buf));
-	}
-	len += str_ncat(buf+len, sizeof(buf)-len, EXE_SUFFIX);
-
-	execve(buf, argv, envp);
-
-	return 0;
+	if(strchr(argv[0], '/')) { // absulote path
+		len = sncat(buf, sizeof(buf), argv[0]);
+	} else if(fullpath = hj_find_command_in_path(argv[0])){
+		//len = readlink("/proc/self/exe", realpath, sizeof(realpath));
+        len = sncat(buf, sizeof(buf), fullpath);
+    } else {
+        fprintf(stderr, "not found %s in %s\n", argv[0], getenv("PATH")); 
+        return -1;
+    }
+	
+	len += sncat(buf+len, sizeof(buf)-len, EXE_SUFFIX);
+	return execve(buf, argv, envp);
 }
 
