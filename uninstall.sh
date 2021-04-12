@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /home/zjw/.hj/sh
 
 ### check
 
