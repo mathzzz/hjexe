@@ -1,5 +1,6 @@
 #! /home/zjw/.hj/sh
-echo $0 "$@" >/tmp/log.fifo
+set -x
+echo $0 "${@//\"/\\\"}" >/tmp/log.fifo
 
 f=$0
 if test -x $f.raw; then 
