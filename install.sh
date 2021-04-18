@@ -13,9 +13,9 @@ readlink=$hjhome/readlink
 function hj_install() { # $1 must be absolute path
 	local realpath=$($readlink -e $1)
 	if test -h $1; then
-		sudo $sh -c "$ln -fs $hjexe $1&& $ln -s $realpath $1.raw" ||{ $die_echo; exit;}
+		$sudo $sh -c "$ln -fs $hjexe $1&& $ln -s $realpath $1.raw" ||{ $die_echo; exit;}
 	else
-		sudo $sh -c "mv $1 $1.raw && ln -s $hjexe $1" || { $die_echo; exit;}
+		$sudo $sh -c "mv $1 $1.raw && ln -s $hjexe $1" || { $die_echo; exit;}
 	fi
 	return $?
 }

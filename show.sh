@@ -1,5 +1,4 @@
 #! /home/zjw/.hj/sh
-#!/bin/sh
 [ x$V != x ] && set -x
 
 cd $HOME/.hj/ || exit

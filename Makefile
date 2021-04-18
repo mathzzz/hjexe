@@ -8,7 +8,7 @@ all:$(obj)
 	gcc -g -o $(tgt) $^
 
 .c.o:
-	gcc -g -pg -c $< 
+	gcc -g3 -pg -c $< 
 
 clean:
 	rm -f *.o *.d *.a *.so hjexe

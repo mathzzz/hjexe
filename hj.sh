@@ -1,18 +1,19 @@
 #! /home/zjw/.hj/sh
-#!/bin/sh
 
 # install, according to the .hj/xxx hook command
-
+scriptdir=$(dirname $0)
 for f in `ls $HOME/.hj/*.open`; do 
 	name=$(basename $f)
-    ./install.sh ${name%.open}
+    $scriptdir/install.sh ${name%.open}
 done
 
-"$@"
+echo begin .................
+time "$@"
+echo end.................
 
 for f in `ls $HOME/.hj/*.open`; do 
 	name=$(basename $f)
-    ./uninstall.sh ${name%.open}
+    $scriptdir/uninstall.sh ${name%.open}
 done
 
 

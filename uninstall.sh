@@ -1,4 +1,6 @@
 #! /home/zjw/.hj/sh
+#! /root/.hj/sh
+#! /home/zjw/.hj/sh
 
 ### check
 
