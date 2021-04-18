@@ -13,6 +13,7 @@
 #define ENV_MAPBUF_SIZE  (1024*32)
 #define ENV_FILE     "/tmp/.env"
 
+#define BASENAME(full) ((strrchr(full, '/')?:full-1)+1)
 
 static inline int 
 sncat(char *buf, size_t bufsize, char *chip)
@@ -95,20 +96,6 @@ hjexe_print_diff_args(int argc, char **argv, char * const *envp)
 	return;
 }
 
-#define BASENAME(full) (strrchr(full, '/') + 1)
-
-static inline char *
-getbasedir(char *fullpath)
-{
-	char *pc;
-	if(fullpath[0] == '/') {
-		pc = BASENAME(fullpath);
-		*(pc - 1) = '\0';
-	}
-
-	return fullpath;
-}
-
 
 static int 
 exehj_is_open(char *bname)
@@ -144,8 +131,8 @@ char *hj_find_command_in_path(char *name)
             memcpy(buf, p1, len);
             buf[len] = '/';
             sncat(buf+len+1, sizeof(buf)-len-1,  name);
-            if(0 ==  access(buf, X_OK))
-                return buf;
+            if(0 ==  access(buf, X_OK)) 
+               return buf; 
         }
     }
 
@@ -191,7 +178,7 @@ int main(int argc, char **argv, char **envp)
 	char buf[256];
 	char realpath[512];
 	char *bname = BASENAME(argv[0]);
-    char *pathdir = hj_find_command_in_path(bname);
+    char *fullname= hj_find_command_in_path(bname);
 	if(0 == strcmp("hjexe", bname)){
 		fprintf(stderr, "install cmd1,cmd2,...\n\n");
 		return 0;
@@ -208,9 +195,11 @@ int main(int argc, char **argv, char **envp)
 		len = sncat(buf, sizeof(buf), getenv("PWD"));
 		len += sncat(buf+len, sizeof(buf)-len, "/");
 		len += sncat(buf+len, sizeof(buf)-len, argv[0]);
-	} else if(pathdir != NULL){
+	} else if(fullname != NULL){
 		//len = readlink("/proc/self/exe", realpath, sizeof(realpath));
-        len = sncat(buf, sizeof(buf), pathdir);
+		char *pc = BASENAME(fullname);
+		*pc = '\0';
+        len = sncat(buf, sizeof(buf), fullname);
         len += sncat(buf+len, sizeof(buf)-len, bname);
     } else {
         fprintf(stderr, "not found %s in %s\n", argv[0], getenv("PATH")); 
@@ -218,7 +207,6 @@ int main(int argc, char **argv, char **envp)
     }
 	
 	len += sncat(buf+len, sizeof(buf)-len, ".raw");
-	
 	if(0 == access(buf, X_OK))
 		execve(buf, argv, envp);
 

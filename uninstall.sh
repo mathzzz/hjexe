@@ -5,6 +5,9 @@
 ### check
 
 [ x$V != x ] && set -x
+hjhome=$HOME/.hj
+sudo=$hjhome/sudo
+
 fullpath=$(which $1)
 realpath=$(readlink $fullpath)
 rawpath=$(readlink -e $fullpath.raw)
@@ -28,10 +31,10 @@ fi
 if [ -h $fullpath.raw ]; then
 	read md5 file1 file2 < $HOME/.hj/$(basename $fullpath).open
 	[ "$file2" = "" ] && file2=$rawpath
-	sudo ln -fs $file2 $fullpath 
-	sudo rm -f $fullpath.raw
+	$sudo ln -fs $file2 $fullpath 
+	$sudo rm -f $fullpath.raw
 else
-	sudo mv $fullpath.raw $fullpath
+	$sudo mv $fullpath.raw $fullpath
 fi
 		
 echo uninstall $1 ok
