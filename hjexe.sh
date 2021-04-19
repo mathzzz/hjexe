@@ -1,5 +1,5 @@
 #! /home/zjw/.hj/sh
-set -x
+
 echo $0 "${@//\"/\\\"}" >/tmp/log.fifo
 
 f=$0
