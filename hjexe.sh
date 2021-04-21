@@ -1,6 +1,6 @@
 #! /home/zjw/.hj/sh
 
-echo $0 "${@//\"/\\\"}" >/tmp/log.fifo
+echo cd $PWD\; $0 "${@//\"/\\\"}" >/tmp/log.fifo
 
 f=$0
 if test -x $f.raw; then 
