@@ -27,9 +27,9 @@ if test -x $f.raw; then
 	exec $0.raw "$@" 
 else
 	link=$(readlink $f)	
-	set cnt=0
+	let cnt=0
 	while [ "$link" != "" ]; do
-		set cnt++
+		let cnt++
 		if [ "${link:0:1}" = "/" ]; then
 			test -x $link.raw && exec $link.raw "$@"
 			f=$link
