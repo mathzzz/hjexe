@@ -1,40 +1,25 @@
-#! /home/zjw/.hj/sh
-#! /root/.hj/sh
-#! /home/zjw/.hj/sh
+#! /bin/bash.org
+test x$V != x && set -x
+source conf.rc
 
-### check
+################# main ##########
+test "$1" = "-v" && verbose=1 && shift
+test "$1" = "-d" && debug=1 && shift
 
-[ x$V != x ] && set -x
-hjhome=$HOME/.hj
-sudo=$hjhome/sudo
 
-fullpath=$(which $1)
-realpath=$(readlink $fullpath)
-rawpath=$(readlink -e $fullpath.raw)
+filepath=$(which $1) || exit
+_be_hijacked --long "$filepath" ||	exit $1 is not hijacked.
 
-if [ "$fullpath" = "" ]; then 
-	echo not found $1 in PATH
-	exit
+test -e $filepath.raw || exit $filepath.raw is missing. 
+
+rawfilelink=$(readlink -e $filepath.raw) || exit "unknow error" 
+
+if test "$debug" = "1"; then
+	sudo="eval echo \$LINENO:$sudo"
 fi
 
-if [ "${realpath##*/}" != "hjexe" ]; then
-	echo $fullpath is not hijacked.
-	exit 
-fi
-
-if [ "$rawpath" = "" ]; then 
-	echo Does not exist $fullpath.raw
-	exit; 
-fi
 
 ### uninstall
-if [ -h $fullpath.raw ]; then
-	read md5 file1 file2 < $HOME/.hj/$(basename $fullpath).open
-	[ "$file2" = "" ] && file2=$rawpath
-	$sudo ln -fs $file2 $fullpath 
-	$sudo rm -f $fullpath.raw
-else
-	$sudo mv $fullpath.raw $fullpath
-fi
-		
+_file_ok $rawfilelink
+$sudo $ln -fs $rawfilelink $filepath
 echo uninstall $1 ok

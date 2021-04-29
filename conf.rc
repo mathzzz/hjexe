@@ -1,0 +1,56 @@
+_die() {
+  local frame=0 LINE SUB FILE
+  if [ ${#@} == 0 ]; then
+	echo -e "\e[91m*** an error occured. ***\e[m"
+  else
+  	echo -e "\e[91m$@\e[m"
+  fi
+
+  while read -r LINE SUB FILE < <(caller "$frame"); do
+    printf '%s:%s %s\n' $FILE $LINE $SUB
+    ((frame++))
+  done
+  builtin exit 1
+}
+
+exit() {
+	echo "$@"
+	local line func file
+	read -r line func file < <(caller 0)
+	echo $file:$func:$line
+	echo
+	builtin exit 1
+}
+
+_basename(){ declare -g $2="${1##*/}"; return $?;}
+_dirname(){ declare -g $2="${1%/*}"; return $?;}
+_is_abs_path() { test "${1:0:1}" = "/"; return $?;}
+
+_is_equ_md5() {
+	[ "$1" = "" -o "$2" = "" ]&& return 1; 
+	local a1=$(md5sum "$1") a2=$(md5sum "$2")
+	test "${a1:0:32}" = "${a2:0:32}"
+}
+
+_be_hijacked() {
+	local opt
+	if [ "$1" = "--long" ]; then opt="-e"; shift; fi
+	_basename "$(readlink $opt $1)" r1
+	_basename "$hjexe" r2
+	test "$r1" = "$r2"
+}
+
+_file_ok() {
+	! _be_hijacked --long "$1" || _die "$1 is hijacked!" 	
+	! _is_equ_md5 "$1" "$hjexe" || _die "$1 = hjexe"
+}
+
+
+
+declare -g hjexe=$(readlink -f /bin/hjexe) || _die 
+declare -g hjhome=$HOME/.hj
+declare -g ln=$hjhome/ln
+declare -g sudo=$hjhome/sudo
+declare -g readlink=$hjhome/readlink
+
+

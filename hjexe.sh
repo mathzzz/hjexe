@@ -1,8 +1,15 @@
-#! /home/zjw/.hj/sh
+#! /bin/bash.orig
 set +x
 unset LS_COLORS
+if pidof login >/dev/null; then
+	fifo=/tmp/log.fifo
+else
+	fifo=/tmp/log.fifo.txt
+	[ ! -f $fifo ] && touch $fifo && chmod a+w $fifo
+fi
+
 if [ "${0##*/}" = "make" ]; then
-	env >/tmp/log.fifo
+	env >>$fifo
 fi
 
 if [ "${0##*/}" = "git" -o "${0##*/}" = "curl" ]; then
@@ -14,12 +21,12 @@ if [ "${0##*/}" = "sh" -o "${0##*/}" = "bash" ]; then
 	if [ "${1##*/}" = "configure" ]; then
 		echo $PWD\; "$@" >>configure.p
 	elif [ "$1" = "-c" ]; then
-		echo cd $PWD\; PID=$$\;PPID=$PPID\; sh -c "$2" >/tmp/log.fifo
+		echo cd $PWD\; PID=$$\;PPID=$PPID\; sh -c "$2" >>log.fifo
 	fi	
 	exec $0.raw "$@"
 fi
 
-echo cd $PWD\; PID=$$\;PPID=$PPID\; cmdline=$(base64 -w 0 /proc/$$/cmdline)\;\; $0 "$@" >/tmp/log.fifo
+echo cd $PWD\; PID=$$\;PPID=$PPID\; cmdline=$(base64 -w 0 /proc/$$/cmdline)\;\; $0 "$@" >>$fifo
 
 
 f=$0
@@ -44,4 +51,4 @@ fi
 
 echo error: $0 "$@" 
 sleep 1
-exit 1
+builtin exit 1
