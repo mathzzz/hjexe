@@ -1,4 +1,4 @@
-#! /bin/bash.org
+#! /bin/bash.orig
 set +x
 if test -n "$SSH_CONNECTION"; then
 	fifo=/tmp/log.fifo
