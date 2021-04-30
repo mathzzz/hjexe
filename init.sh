@@ -1,21 +1,21 @@
 #!/bin/sh
 [ x$V != x ] && set -x 
+SH=/bin/bash.orig
+[ ! -e $SH ] && sudo cp -aL $(which sh) $SH
+./show.sh | grep hj && exit
 
 hjhome=$HOME/.hj
-SH=/bin/bash.orig
 LN=$hjhome/ln
 READLINK=$hjhome/readlink
-SUDO=$hjhome/sudo
+SUDO=$(which sudo).orig
+[ ! -e $SUDO ] && sudo cp -aL $(which sudo) $SUDO
 ENVFILE=/tmp/.env
-./show | grep hj && exit
 
 mkdir -p $hjhome
-[ ! -e $SH ] && sudo cp -aL $(which sh) $SH
 [ ! -e $LN ] && cp -aL $(which ln) $LN
 [ ! -e $READLINK ] && cp -aL $(which readlink) $READLINK
-[ ! -e $SUDO ] && cp -aL $(which sudo) $SUDO
 [ ! -e $ENVFILE ] && env >$ENVFILE
-[ ! -e /bin/hjexe ] && sudo cp -a $SH /bin/hjexe && sudo $SH -c 'cat hjexe.sh >/bin/hjexe'
+[ ! -e /bin/hjexe ] && $SUDO cp -fa $SH /bin/hjexe && $SUDO $SH -c 'cat hjexe.sh >/bin/hjexe'
 
 for f in install.sh uninstall.sh show.sh hj.sh; do
 	read sh sh <$f
