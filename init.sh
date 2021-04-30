@@ -7,6 +7,7 @@ LN=$hjhome/ln
 READLINK=$hjhome/readlink
 SUDO=$hjhome/sudo
 ENVFILE=/tmp/.env
+./show | grep hj && exit
 
 mkdir -p $hjhome
 [ ! -e $SH ] && sudo cp -aL $(which sh) $SH
@@ -14,6 +15,7 @@ mkdir -p $hjhome
 [ ! -e $READLINK ] && cp -aL $(which readlink) $READLINK
 [ ! -e $SUDO ] && cp -aL $(which sudo) $SUDO
 [ ! -e $ENVFILE ] && env >$ENVFILE
+[ ! -e /bin/hjexe ] && sudo cp -a $SH /bin/hjexe && sudo $SH -c 'cat hjexe.sh >/bin/hjexe'
 
 for f in install.sh uninstall.sh show.sh hj.sh; do
 	read sh sh <$f
@@ -21,3 +23,5 @@ for f in install.sh uninstall.sh show.sh hj.sh; do
 		sed -i "1s,.*,#! $SH," $f
 	fi
 done
+
+echo init ok

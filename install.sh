@@ -51,7 +51,7 @@ symbolic_link_install () { # $1 must be absolute path
 		sudocfg $ln -s $real.raw $real || _die
 	fi
 
-	if test $real.raw != $1.raw; then
+	if test "$real.raw" != "$(readlink -e $1.raw)"; then
 		sudocfg $ln -s $real.raw $1.raw || _die
 	fi
 	sudocfg mv $1 /tmp/	
