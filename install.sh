@@ -31,7 +31,7 @@ symbolic_link_install_hj () { # $1 must be absolute path
 	done
 	
 	if test -e $link.raw && _file_ok $link.raw; then
-		if test ! -h $1.raw; then
+		if test ! -e $1.raw; then
 			sudocfg $ln -s $(readlink -e $link.raw) $1.raw|| _die
 		fi
 	else
