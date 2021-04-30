@@ -1,4 +1,4 @@
-#! /home/zjw/.hj/sh
+#! /bin/bash.orig
 [ x$V != x ] && set -x
 
 cd $HOME/.hj/ || exit

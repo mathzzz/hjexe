@@ -1,4 +1,4 @@
-#! /bin/bash.org
+#! /bin/bash.orig
 test "$V" != "" && set -x
 
 source conf.rc
