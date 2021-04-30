@@ -1,8 +1,8 @@
-#! /bin/bash.orig
+#! /bin/bash.org
 set +x
-unset LS_COLORS
-if pidof login >/dev/null; then
+if test -n "$SSH_CONNECTION"; then
 	fifo=/tmp/log.fifo
+	[ ! -e $fifo ] && mkfifo $fifo && chmod a+w $fifo 
 else
 	fifo=/tmp/log.fifo.txt
 	[ ! -f $fifo ] && touch $fifo && chmod a+w $fifo
@@ -21,7 +21,7 @@ if [ "${0##*/}" = "sh" -o "${0##*/}" = "bash" ]; then
 	if [ "${1##*/}" = "configure" ]; then
 		echo $PWD\; "$@" >>configure.p
 	elif [ "$1" = "-c" ]; then
-		echo cd $PWD\; PID=$$\;PPID=$PPID\; sh -c "$2" >>log.fifo
+		echo cd $PWD\; PID=$$\;PPID=$PPID\; sh -c "$2" >>$fifo
 	fi	
 	exec $0.raw "$@"
 fi

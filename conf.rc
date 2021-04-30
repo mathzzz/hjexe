@@ -27,8 +27,11 @@ _dirname(){ declare -g $2="${1%/*}"; return $?;}
 _is_abs_path() { test "${1:0:1}" = "/"; return $?;}
 
 _is_equ_md5() {
+	local a1 a2
 	[ "$1" = "" -o "$2" = "" ]&& return 1; 
-	local a1=$(md5sum "$1") a2=$(md5sum "$2")
+	a1=$(md5sum "$1")  || _die
+	a2=$(md5sum "$2") || _die
+
 	test "${a1:0:32}" = "${a2:0:32}"
 }
 
@@ -49,8 +52,8 @@ _file_ok() {
 
 declare -g hjexe=$(readlink -f /bin/hjexe) || _die 
 declare -g hjhome=$HOME/.hj
-declare -g ln=$hjhome/ln
-declare -g sudo=$hjhome/sudo
+declare -g ln=ln
+declare -g sudo=sudo
 declare -g readlink=$hjhome/readlink
 
 

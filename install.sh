@@ -4,11 +4,19 @@ test "$V" != "" && set -x
 source conf.rc
 
 read -r sh sh < "$0"
+sudocfg () {
+	cmd=$(which $1 2>/dev/null)
+	cmdraw=$(which $1.raw 2>/dev/null)
+	shift
+	test "$cmdraw" != "" && cmd=$cmdraw
+	$sudo $cmd "$@" || _die
+}
+
 regular_install () { # $1 must be obsolute path
 	_file_ok $1;
-	test ! -e $1.raw &&	$sudo mv $1 $1.raw || _die
+	test ! -e $1.raw &&	sudocfg mv $1 $1.raw 
 	_file_ok $1.raw
-	! _be_hijacked $1 && $sudo $ln -s $hjexe $1 || _die
+	! _be_hijacked $1 && sudocfg ln -s $hjexe $1 || _die
 }
 
 symbolic_link_install_hj () { # $1 must be absolute path
@@ -24,7 +32,7 @@ symbolic_link_install_hj () { # $1 must be absolute path
 	
 	if test -e $link.raw && _file_ok $link.raw; then
 		if test ! -h $1.raw; then
-			$sudo $ln -s $(readlink -e $link.raw) $1.raw|| _die
+			sudocfg $ln -s $(readlink -e $link.raw) $1.raw|| _die
 		fi
 	else
 		echo $1 is hijacked, but raw file is missing.	
@@ -39,15 +47,15 @@ symbolic_link_install () { # $1 must be absolute path
 	test "${real##*.}" = "raw" && real="${real%.*}"
 
 	if test ! -f $real.raw; then  
-		$sudo mv $real $real.raw || _die
-		$sudo $ln -s $real.raw $real || _die
+		sudocfg mv $real $real.raw || _die
+		sudocfg $ln -s $real.raw $real || _die
 	fi
 
 	if test $real.raw != $1.raw; then
-		$sudo $ln -s $real.raw $1.raw || _die
+		sudocfg $ln -s $real.raw $1.raw || _die
 	fi
-	$sudo mv $1 /tmp/	
-	$sudo $ln -s $hjexe $1
+	sudocfg mv $1 /tmp/	
+	sudocfg $ln -s $hjexe $1
 }
 
 ################# main ##########
