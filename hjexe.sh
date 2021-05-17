@@ -1,6 +1,9 @@
 #! /bin/bash.orig
-set +x
-if test -n "$SSH_CONNECTION"; then
+
+[ "$HJEXE_DEBUG" = "1" ] && set -x
+
+
+if test -n "$LONGIN_OK"; then
 	fifo=/tmp/log.fifo
 	[ ! -e $fifo ] && mkfifo $fifo && chmod a+w $fifo 
 else
@@ -8,30 +11,43 @@ else
 	[ ! -f $fifo ] && touch $fifo && chmod a+w $fifo
 fi
 
-if [ "${0##*/}" = "make" ]; then
-	env >>$fifo
-fi
-
-if [ "${0##*/}" = "git" -o "${0##*/}" = "curl" ]; then
-	export ALL_PROXY=socks5://127.0.0.1:5626
-fi
-
-
-if [ "${0##*/}" = "sh" -o "${0##*/}" = "bash" ]; then
-	if [ "${1##*/}" = "configure" ]; then
-		echo $PWD\; "$@" >>configure.p
-	elif [ "$1" = "-c" ]; then
-		echo cd $PWD\; PID=$$\;PPID=$PPID\; sh -c "$2" >>$fifo
+shell_log() {
+	if [ "$1" != "-cc" ]; then
+		echo "PPID=$PPID;PID=$$; cd $PWD; sh $@" >>$fifo
+	
 	fi	
-	exec $0.raw "$@"
-fi
+}
 
-echo cd $PWD\; PID=$$\;PPID=$PPID\; cmdline=$(base64 -w 0 /proc/$$/cmdline)\;\; $0 "$@" >>$fifo
+args="$@"
+env=""
+case ${0##*/} in
+	gcc)
+		test -n "$IGNORE_Werror" && args="${@//-Werror}"
+		;;
+
+	make)
+		env="env=$(sed -z 's/$/\\n/g' /proc/$$/environ);"
+		;;
+
+	git|curl)
+		export ALL_PROXY=socks5://127.0.0.1:5626
+		;;
+
+	sh|bash)
+		shell_log "$@"
+		test -x $0.raw && exec $0.raw "$@"
+		;;
+	*)
+		syslog=syslog
+		;;
+esac
+
+echo "PPID=$PPID;PID=$$; cd $PWD; $env $0 $@" >>$fifo 
 
 
 f=$0
 if test -x $f.raw; then 
-	exec $0.raw "$@" 
+	exec $0.raw "$@"
 else
 	link=$(readlink $f)	
 	let cnt=0
@@ -45,7 +61,7 @@ else
 			f=${f%/*}/$link
 		fi
 		link=$(readlink $f)
-		[ "$cnt" = "8" ] && break;
+		test $cnt = 8  && break;
 	done
 fi
 
