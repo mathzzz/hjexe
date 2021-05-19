@@ -1,6 +1,7 @@
 # hjexe
 hijacke execute program
 
+``` shell 
 make
 sudo cp -a hjexe /bin/
 ./install gcc
@@ -20,4 +21,5 @@ cat /tmp/log.fifo | gzip -9 > /tmp/log.gz
 
 #term 3
 date >/tmp/log.p
+```
 
