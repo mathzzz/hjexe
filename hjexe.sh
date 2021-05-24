@@ -79,7 +79,7 @@ else
 		let cnt++
 		if [ "${link:0:1}" = "/" ]; then
 			test -x $link.raw && exec $link.raw "$@"
-			=$link
+			f=$link
 		else
 			test -x ${f%/*}/$link.raw && exec ${f%/*}/$link.raw "$@"
 			f=${f%/*}/$link
