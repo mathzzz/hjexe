@@ -2,6 +2,7 @@
 test "$V" != "" && set -x
 
 source conf.rc
+grep 'export LOGIN_OK=1' ~/.bashrc || exit "init failed." 
 
 read -r sh sh < "$0"
 sudocfg () {
@@ -9,7 +10,7 @@ sudocfg () {
 	cmdraw=$(which $1.raw 2>/dev/null)
 	shift
 	test "$cmdraw" != "" && cmd=$cmdraw
-	$sudo $cmd "$@" || _die
+	$sudo $cmd "$@" || _die "both $1 and $1.raw exist."
 }
 
 regular_install () { # $1 must be obsolute path

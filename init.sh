@@ -1,5 +1,5 @@
 #!/bin/sh
-[ x$V != x ] && set -x 
+test -n "$V" && set -x 
 SH=/bin/bash.orig
 [ ! -e $SH ] && sudo cp -aL $(which sh) $SH
 ./show.sh | grep hj && exit
@@ -23,5 +23,5 @@ for f in install.sh uninstall.sh show.sh hj.sh; do
 		sed -i "1s,.*,#! $SH," $f
 	fi
 done
-
+grep 'export LOGIN_OK=1' ~/.bashrc || echo 'export LOGIN_OK=1' >>~/.bashrc
 echo init ok

@@ -14,10 +14,9 @@ _die() {
 }
 
 exit() {
-	echo "$@"
 	local line func file
 	read -r line func file < <(caller 0)
-	echo $file:$func:$line
+	echo $file:$func:$line: "$@"
 	echo
 	builtin exit 1
 }
@@ -48,7 +47,17 @@ _file_ok() {
 	! _is_equ_md5 "$1" "$hjexe" || _die "$1 = hjexe"
 }
 
+_listpath(){
+    local f=$1 d=${1/*}
+    while test -n "$f" -a -e "$f"; do
+        echo $f
+        test ${f:0:1} != / && f=${d:-.}/$f
+        d=${f%/*}; f=$(readlink $f)
+    done
+}
 
+
+test $BASH_SOURCE == $0  && exit "please use source-mode and exec this script"
 
 declare -g hjexe=$(readlink -f /bin/hjexe) || _die 
 declare -g hjhome=$HOME/.hj

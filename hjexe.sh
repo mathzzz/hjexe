@@ -3,30 +3,47 @@
 [ "$HJEXE_DEBUG" = "1" ] && set -x
 
 
-if test -n "$LONGIN_OK"; then
+if test -n "$LOGIN_OK"; then
 	fifo=/tmp/log.fifo
 	[ ! -e $fifo ] && mkfifo $fifo && chmod a+w $fifo 
 else
 	fifo=/tmp/log.fifo.txt
-	[ ! -f $fifo ] && touch $fifo && chmod a+w $fifo
+	[ ! -f $fifo ] && > $fifo && chmod a+w $fifo
 fi
 
 shell_log() {
 	if [ "$1" != "-cc" ]; then
-		echo "PPID=$PPID;PID=$$; cd $PWD; sh $@" >>$fifo
+		echo "PPID=$PPID;PID=$$; cd $PWD; sh" "$@" >>$fifo
 	
 	fi	
 }
 
-args="$@"
+gcc_include_key() {
+	for f in "$@"; do 
+		let b=${#f}-2; 
+		[[ ${f:$b} == .[csSa] ]] && return 0; 
+		test "${f/.so}" != "$f" && return 0;
+	done
+	return 1 
+}
+
+declare -A args="$@"
+log_open=0
 env=""
 case ${0##*/} in
 	gcc)
-		test -n "$IGNORE_Werror" && args="${@//-Werror}"
+#		test -n "$IGNORE_Werror" && args="${@//-Werror }"
+	        gcc_include_key "$@" && log_open=1
+		;;
+	ar|ld)
+		log_open=1
 		;;
 
 	make)
-		env="env=$(sed -z 's/$/\\n/g' /proc/$$/environ);"
+		unset LS_COLORS
+		#env="env=$(sed -z 's/$/\\n/g' /proc/$$/environ);"
+		env=$(env)
+		log_open=1
 		;;
 
 	git|curl)
@@ -42,12 +59,19 @@ case ${0##*/} in
 		;;
 esac
 
-echo "PPID=$PPID;PID=$$; cd $PWD; $env $0 $@" >>$fifo 
+if [ $log_open = 1 ]; then 
+	echo "$(printf "%(%F.%T)T" -1);PPID=$PPID PID=$$;cd $PWD; $0 " >>$fifo
+        echo "$@" >>$fifo 
+	test ${#env} -gt 0 && echo "${env}"  >>$fifo 
+fi
 
 
 f=$0
 if test -x $f.raw; then 
-	exec $0.raw "$@"
+#set -x
+	#pargs.c "${@//-Werror/-D_plp_=1}" >>$fifo
+	exec $0.raw "${@//-Werror/-D__plp__=1}"
+set +x
 else
 	link=$(readlink $f)	
 	let cnt=0
@@ -55,7 +79,7 @@ else
 		let cnt++
 		if [ "${link:0:1}" = "/" ]; then
 			test -x $link.raw && exec $link.raw "$@"
-			f=$link
+			=$link
 		else
 			test -x ${f%/*}/$link.raw && exec ${f%/*}/$link.raw "$@"
 			f=${f%/*}/$link

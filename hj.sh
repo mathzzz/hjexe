@@ -1,4 +1,4 @@
-#! /home/zjw/.hj/sh
+#! /bin/bash.orig
 
 # install, according to the .hj/xxx hook command
 scriptdir=$(dirname $0)
