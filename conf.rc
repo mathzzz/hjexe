@@ -59,10 +59,10 @@ _listpath(){
 
 test $BASH_SOURCE == $0  && exit "please use source-mode and exec this script"
 
-declare -g hjexe=$(readlink -f /bin/hjexe) || _die 
-declare -g hjhome=$HOME/.hj
+declare -g hjexe=/bin/hjexe
+declare -g hjhome=/home/${SUDO_USER:-$USER}/.hj
 declare -g ln=ln
 declare -g sudo=sudo
-declare -g readlink=$hjhome/readlink
+declare -g readlink=readlink
 
 

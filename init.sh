@@ -12,6 +12,6 @@ for f in bash readlink; do
     fi
 done
 
-envfile=/tmp/.env
+sudo ln -s hjexe.sh /bin/hjexe
 
 mkdir -p $hjhome
