@@ -1,27 +1,17 @@
 #!/bin/sh
 test -n "$V" && set -x 
-SH=/bin/bash.orig
-[ ! -e $SH ] && sudo cp -aL $(which sh) $SH
-./show.sh | grep hj && exit
 
-hjhome=$HOME/.hj
-LN=$hjhome/ln
-READLINK=$hjhome/readlink
-SUDO=$(which sudo).orig
-[ ! -e $SUDO ] && sudo cp -aL $(which sudo) $SUDO
-ENVFILE=/tmp/.env
+hjhome=/home/${SUDO_USER:-$USER}/.hj
+
+for f in bash readlink; do 
+    ocmd=$(which $f).orig
+    if [ -f $ocmd && -x $ocmd ]; then
+        :
+    else 
+        sudo ln ${ocmd%.*} $ocmd || exit "error: ln $ocmd" 
+    fi
+done
+
+envfile=/tmp/.env
 
 mkdir -p $hjhome
-[ ! -e $LN ] && cp -aL $(which ln) $LN
-[ ! -e $READLINK ] && cp -aL $(which readlink) $READLINK
-[ ! -e $ENVFILE ] && env >$ENVFILE
-[ ! -e /bin/hjexe ] && $SUDO cp -fa $SH /bin/hjexe && $SUDO $SH -c 'cat hjexe.sh >/bin/hjexe'
-
-for f in install.sh uninstall.sh show.sh hj.sh; do
-	read sh sh <$f
-	if [ "$sh" != "$SH" ]; then
-		sed -i "1s,.*,#! $SH," $f
-	fi
-done
-grep 'export LOGIN_OK=1' ~/.bashrc || echo 'export LOGIN_OK=1' >>~/.bashrc
-echo init ok
