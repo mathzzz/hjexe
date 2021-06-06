@@ -14,9 +14,9 @@ execute() {
 }
 
 # HJOPEN=make,gcc,ar,
-if [[ "$HJOPEN" == *${0##*/}* && -r "/home/${SUDO_USER:-$USER}/${0##*/}.rc" ]]; then
+if [[ ( "$HJOPEN" == "ALL" || "$HJOPEN" == *${0##*/}* ) && -r "/home/${SUDO_USER:-$USER}/.hj/${0##*/}.rc" ]]; then
 	declare -a args=("$@")
-    source "/home/${SUDO_USER:-$USER}/${0##*/}.rc" 
+    source "/home/${SUDO_USER:-$USER}/.hj/${0##*/}.rc" 
 	execute "${args[@]}"
 else
 	execute "$@"
