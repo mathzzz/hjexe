@@ -5,11 +5,10 @@ execute() {
 	local cnt=0 f=$0
 	[ -x $f.raw ] && exec $0.raw "$@"
 	while link=$(/bin/readlink.orig $f); do
-		let cnt++
-		[ ${link:0:1} = / ] || link=${f%/*} 
+		[ ${link:0:1} = / ] || link=${f%/*}/$link
 		f=$link
 		[ -x $f.raw ] && exec $f.raw "$@"
-		[ $cnt = 8 ] && break;
+		[ $((cnt++)) = 8 ] && break;
 	done
 }
 
