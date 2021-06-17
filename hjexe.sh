@@ -53,7 +53,7 @@ hjexe_install() {
         [ -e $fpath.raw ] || sudo mv $fpath $fpath.raw 
         hpath=$(readlink $fpath) || sudo ln -i -s $0 $fpath || continue 
 	# had installed
-	[ -z "$hpath" -a "${hpath##*/}" != "${0##*/}" ] && ls -l $f && echo unknown error
+	[ -n "$hpath" -a "${hpath##*/}" != "${0##*/}" ] && ls -l $f && echo unknown error
 	[ -e $hjhome/$f.rc ] || ln -s default $hjhome/$f.rc
         echo install $f ... ok
     done
