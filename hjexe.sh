@@ -1,7 +1,7 @@
 #! /bin/bash.orig 
 [ "$HJDEBUG" = 1 ] && set -ex
 
-sudo() { [ $(id -u) = 0 ] && "$@" || command sudo "$@"; }
+sudo() { [ $UID = 0 ] && "$@" || command sudo "$@"; }
 which () { 
 	command which.orig $1 2>/dev/null || for f in ${PATH//:/ }; do 
 		test -e $f/$1 && echo $f/$1&& break; 
@@ -44,7 +44,7 @@ cmdbak() {
 }
 
 hjexe_install() {
-    local fpath hpath;
+    local fpath hpath
     cmdbak bash which 
     while [ $# != 0 ]; do 
         f=$1;shift
@@ -60,7 +60,7 @@ hjexe_install() {
 }
 
 hjexe_uninstall() {
-    local fpath fpathraw hpath;
+    local fpath fpathraw hpath
     while [ $# != 0 ]; do
         f=$1;shift
         [ "${f: -4}" = ".raw" ] && continue
@@ -79,13 +79,32 @@ hjexe_reset() {
 }
 
 hjexe_list() {
-    for f in ${PATH//:/ }; do
-        test -d $f && ls -l $f/ | grep -E '\.raw|hjexe'
+    local cmd link cnt
+    cnt=$#
+    while [ $# != 0 ]; do
+	cmd=$1; shift
+        test -e $hjhome/$cmd.rc&&cat $hjhome/$cmd.rc 
     done
+    [ $cnt != 0 ] && return;
+
+    for f in ${PATH//:/ }; do while read cmd _ link; do 
+        test -e $f/$cmd.raw&&echo -ne "\t$cmd"||echo -e "\n$cmd missing $cmd.raw"
+    	done< <(test -d $f&&ls -l $f/|awk '/-> .*hjexe$/{print $9,$10,$11}')
+    done
+    echo
 }
 
+hjexe_edit() {
+    test -f $hjhome/$1.rc && vim $hjhome/$1.rc
+}
+
+
 hjexe_help() {
-    echo ...;
+    echo "${0##*/} [-i|-u|-l|-r] [command]"
+    echo  -i  --install command
+    echo  -u  --uninstall command
+    echo  -l  --list 
+    echo  -r  --reset
 }
 
 hjexe_cfg() {
@@ -97,9 +116,12 @@ hjexe_cfg() {
             shift
             hjexe_uninstall "$@";;
         --list|-l)
-            hjexe_list ;;
+	    shift
+            hjexe_list "$@";;
         --reset|-r)
             hjexe_reset;;
+	edit)
+            hjexe_edit "$2";;
         *) hjexe_help;;
     esac
 }
