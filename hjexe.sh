@@ -11,7 +11,7 @@ which () {
 
 execute() {
 	local cnt=0 f=$0
-	[ -x $f.raw ] && exec $0.raw "$@"
+	[ -x $f.raw ] && exec -a $0 $0.raw "$@"
 	while link=$(readlink $f); do
 		[ ${link:0:1} = / ] || link=${f%/*}/$link
 		f=$link
@@ -53,7 +53,7 @@ hjexe_install() {
         [ -e $fpath.raw ] || sudo mv $fpath $fpath.raw 
         hpath=$(readlink $fpath) || sudo ln -i -s $0 $fpath || continue 
 	# had installed
-	[ -n "$hpath" -a "${hpath##*/}" != "${0##*/}" ] && ls -l $f && echo unknown error
+	[ -n "$hpath" -a "${hpath##*/}" != "${0##*/}" ] && ls -l $fpath && echo unknown error
 	[ -e $hjhome/$f.rc ] || ln -s default $hjhome/$f.rc
         echo install $f ... ok
     done
