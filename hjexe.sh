@@ -103,8 +103,9 @@ hjexe_help() {
     echo "${0##*/} [-i|-u|-l|-r] [command]"
     echo  -i  --install command
     echo  -u  --uninstall command
-    echo  -l  --list 
+    echo  "-l  --list  [command]"
     echo  -r  --reset
+    echo edit command
 }
 
 hjexe_cfg() {
@@ -120,7 +121,7 @@ hjexe_cfg() {
             hjexe_list "$@";;
         --reset|-r)
             hjexe_reset;;
-	edit)
+	    edit)
             hjexe_edit "$2";;
         *) hjexe_help;;
     esac
