@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
+#include <time.h>
 
 #define MIN(a, b) ((a<b) ? (a) : (b))
 #define ENV_LINE_MAXLEN 4096

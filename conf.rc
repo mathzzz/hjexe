@@ -25,38 +25,6 @@ _basename(){ declare -g $2="${1##*/}"; return $?;}
 _dirname(){ declare -g $2="${1%/*}"; return $?;}
 _is_abs_path() { test "${1:0:1}" = "/"; return $?;}
 
-_is_equ_md5() {
-	local a1 a2
-	[ "$1" = "" -o "$2" = "" ]&& return 1; 
-	a1=$(md5sum "$1")  || _die
-	a2=$(md5sum "$2") || _die
-
-	test "${a1:0:32}" = "${a2:0:32}"
-}
-
-_be_hijacked() {
-	local opt
-	if [ "$1" = "--long" ]; then opt="-e"; shift; fi
-	_basename "$(readlink $opt $1)" r1
-	_basename "$hjexe" r2
-	test "$r1" = "$r2"
-}
-
-_file_ok() {
-	! _be_hijacked --long "$1" || _die "$1 is hijacked!" 	
-	! _is_equ_md5 "$1" "$hjexe" || _die "$1 = hjexe"
-}
-
-_listpath(){
-    local f=$1 d=${1/*}
-    while test -n "$f" -a -e "$f"; do
-        echo $f
-        test ${f:0:1} != / && f=${d:-.}/$f
-        d=${f%/*}; f=$(readlink $f)
-    done
-}
-
-
 test $BASH_SOURCE == $0  && exit "please use source-mode and exec this script"
 
 declare -g hjexe=/bin/hjexe
