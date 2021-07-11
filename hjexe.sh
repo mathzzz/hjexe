@@ -1,7 +1,7 @@
 #! /bin/bash.orig 
 [ "$HJDEBUG" = 1 ] && set -ex
 
-sudo() { [ $UID = 0 ] && "$@" || command sudo "$@"; }
+sudo() { [ $UID = 0 ] && "$@" || command sudo "$@"; :;}
 which () { 
 	command which.orig $1 2>/dev/null || for f in ${PATH//:/ }; do 
 		test -e $f/$1 && echo $f/$1&& break; 
@@ -31,31 +31,43 @@ main () {
     execute "$@"
 }
 
-cmdbak() {
-    local f;
+hjexe_backup() {
+    local f raw;
     test -d $hjhome || mkdir $hjhome
     test -e $hjhome/default || echo 'echo $0: "$@" >&2' > $hjhome/default
     while [ $# != 0 ]; do
         f=$(which $1) || exit
-        test -f $f.raw || { sudo mv -i $f $f.raw&& sudo ln -s $f.raw $f; }
-        test -f $f.orig || sudo ln $f.raw $f.orig
+		raw=$f.raw; [ ! -f $f.raw ] && raw=$f
+		if [ ! -e $f.orig ]; then 
+		  	sudo cp -alL $raw $f.orig || exit
+		fi
         shift
     done
 }
 
 hjexe_install() {
-    local fpath hpath
-    cmdbak bash which 
+    local fpath hpath  default
+	[ "$1" = "-default" ] && default=1 && shift
     while [ $# != 0 ]; do 
         f=$1;shift
         [ "${f: -4}" = ".raw" ] && continue;
         fpath=$(which $f)|| continue;
-        [ -e $fpath.raw ] || sudo mv $fpath $fpath.raw 
-        hpath=$(readlink $fpath) || sudo ln -i -s $0 $fpath || continue 
+# [ -e $fpath.raw ] || sudo mv $fpath $fpath.raw 
+        if hpath=$(readlink $fpath); then # its symbolic file
+			if [[ "${hpath: -4}" != ".raw" &&  "${hpath##*/}" != "${0##*/}" ]]; then
+			  	sudo mv $fpath $fpath.raw
+			fi
+	    else
+		  	[ -e $fpath.raw ]|| sudo mv $fpath $fpath.raw
+		fi
+		sudo ln -is $0 $fpath 
 	# had installed
-	[ -n "$hpath" -a "${hpath##*/}" != "${0##*/}" ] && ls -l $fpath && echo unknown error
-	[ -e $hjhome/$f.rc ] || ln -s default $hjhome/$f.rc
-        echo install $f ... ok
+		if [ ! -e $hjhome/$f.rc ]; then
+			cd $hjhome
+			[ "$default" = 1 ] && ln -s default $f.rc || sed '/./s,^,#,' default > $f.rc
+			cd - >/dev/null
+		fi 
+		echo install $f ... ok
     done
 }
 
@@ -121,6 +133,9 @@ hjexe_cfg() {
             hjexe_list "$@";;
         --reset|-r)
             hjexe_reset;;
+		--backup)
+			shift
+			hjexe_backup "$@";;
 	    edit)
             hjexe_edit "$2";;
         *) hjexe_help;;
@@ -128,7 +143,7 @@ hjexe_cfg() {
 }
 
 hjhome="/home/${SUDO_USER:-$USER}/.hj"
-if [ ${0##*/} = hjexe ]; then
+if [[ ${0##*/} = hjexe || ${0##*/} = hjexe.sh ]]; then
     hjexe_cfg "$@"
     exit $?
 else
