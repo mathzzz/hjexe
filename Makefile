@@ -8,7 +8,7 @@ all:$(obj)
 	gcc -g -o $(tgt) $^
 
 install:
-	bash hjexe.sh --backup bash sudo ln which
+	bash hjexe.sh --backup bash sudo ln 
 	sudo.orig cp -i hjexe.sh /usr/bin/hjexe
 
 .c.o:

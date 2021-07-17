@@ -2,12 +2,6 @@
 [ "$HJDEBUG" = 1 ] && set -ex
 
 sudo() { [ $UID = 0 ] && "$@" || command sudo "$@"; :;}
-which () { 
-    command which.orig $1 2>/dev/null || for f in ${PATH//:/ }; do 
-        test -e $f/$1 && echo $f/$1&& break; 
-    done
-}
-
 
 execute() {
     local cnt=0 f=$0
@@ -36,8 +30,8 @@ hjexe_backup() {
     test -d $hjhome || mkdir $hjhome
     test -e $hjhome/default || echo 'echo $0: "$@" >&2' > $hjhome/default
     while [ $# != 0 ]; do
-        f=$(which $1) || exit
-        raw=$f.raw; [ ! -f $f.raw ] && raw=$f
+        f=$(type -P $1) || exit
+        raw=$f.raw; [ -f $f.raw ] || raw=$f
         if [ ! -e $f.orig ]; then 
             sudo cp -alL $raw $f.orig || exit
         fi
@@ -51,7 +45,7 @@ hjexe_install() {
     while [ $# != 0 ]; do 
         f=$1;shift
         [ "${f: -4}" = ".raw" ] && continue;
-        fpath=$(which $f)|| continue;
+        fpath=$(type -P $f)|| continue;
 # [ -e $fpath.raw ] || sudo mv $fpath $fpath.raw 
         if hpath=$(readlink $fpath); then # its symbolic file
             if [[ "${hpath: -4}" != ".raw" &&  "${hpath##*/}" != "${0##*/}" ]]; then
@@ -76,8 +70,8 @@ hjexe_uninstall() {
     while [ $# != 0 ]; do
         f=$1;shift
         [ "${f: -4}" = ".raw" ] && continue
-        fpath=$(which $f) || continue
-        fpathraw=$(which $f.raw) || continue
+        fpath=$(type -P $f) || continue
+        fpathraw=$(type -P $f.raw) || continue
         hpath=$(readlink $fpath) && [ ${hpath##*/} != ${0##*/} ] && continue
         sudo mv $fpathraw $fpath || continue
         echo uninstall $f ... ok
