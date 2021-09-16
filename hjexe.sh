@@ -28,7 +28,10 @@ main () {
 hjexe_backup() {
     local f raw;
     test -d $hjhome || mkdir $hjhome
-    test -e $hjhome/default || echo 'echo $0: "$@" >&2' > $hjhome/default
+    test -e $hjhome/default || { 
+		echo '#echo $0: "$@" >&2' 
+		echo 'echo cd $PWD\; $0 "$@" >> $BASH_SOURCE.log'
+	} >$hjhome/default
     while [ $# != 0 ]; do
         f=$(type -P $1) || exit
         raw=$f.raw; [ -f $f.raw ] || raw=$f
