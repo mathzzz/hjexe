@@ -29,7 +29,6 @@ hjexe_backup() {
     local f raw;
     test -d $hjhome || mkdir $hjhome
     test -e $hjhome/default || { 
-		echo '#echo $0: "$@" >&2' 
 		echo 'echo cd $PWD\; $0 "$@" >> $BASH_SOURCE.log'
 	} >$hjhome/default
     while [ $# != 0 ]; do
@@ -61,7 +60,7 @@ hjexe_install() {
     # had installed
         if [ ! -e $hjhome/$f.rc ]; then
             cd $hjhome
-            [ "$default" = 1 ] && ln -s default $f.rc || sed '/./s,^,#,' default > $f.rc
+            [ "$default" = 1 ] && ln -s default $f.rc 
             cd - >/dev/null
         fi 
         echo install $f ... ok
@@ -103,8 +102,9 @@ hjexe_list() {
     echo
 }
 
-hjexe_edit() {
-    test -f $hjhome/$1.rc && vim $hjhome/$1.rc
+hjexe_do() {
+    cd $hjhome/
+    $1 $2 $3 $4
 }
 
 
@@ -133,9 +133,9 @@ hjexe_cfg() {
         --backup)
             shift
             hjexe_backup "$@";;
-        edit)
-            hjexe_edit "$2";;
-        *) hjexe_help;;
+        -h|--help) hjexe_help;;
+        *)
+            hjexe_do "$@";;
     esac
 }
 
