@@ -114,7 +114,7 @@ hjexe_help() {
     echo  -u  --uninstall command
     echo  "-l  --list  [command]"
     echo  -r  --reset
-    echo edit command
+    echo  command
 }
 
 hjexe_cfg() {
