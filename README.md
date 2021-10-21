@@ -1,5 +1,5 @@
 # hjexe
-hijacke execute program
+hijack executable file
 
 ``` shell 
 make install
