@@ -29,7 +29,7 @@ hjexe_backup() {
     local f raw;
     test -d $hjhome || mkdir $hjhome
     test -e $hjhome/default || { 
-		echo 'echo cd $PWD\; $0 "$@" >> $BASH_SOURCE.log'
+		echo 'echo cd $PWD\; $0 "$@" >> ${BASH_SOURCE%.rc}.log'
 	} >$hjhome/default
     while [ $# != 0 ]; do
         f=$(type -P $1) || exit
@@ -42,8 +42,7 @@ hjexe_backup() {
 }
 
 hjexe_install() {
-    local fpath hpath  default
-    [ "$1" = "-default" ] && default=1 && shift
+    local fpath hpath  default=1
     while [ $# != 0 ]; do 
         f=$1;shift
         [ "${f: -4}" = ".raw" ] && continue;
