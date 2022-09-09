@@ -1,7 +1,12 @@
 #! /bin/bash.orig 
 [ "$HJDEBUG" = 1 ] && set -ex
 
-sudo() { [ $UID = 0 ] && "$@" || command sudo "$@"; :;}
+sudo() { 
+    local sudo
+    [ "$UID" != 0 ] && sudo=sudo
+    type -P sudo >/dev/null || unset sudo
+    command $sudo "$@"
+}
 
 execute() {
     local cnt=0 f=$0
@@ -10,8 +15,9 @@ execute() {
         [ ${link:0:1} = / ] || link=${f%/*}/$link
         f=$link
         [ -x $f.raw ] && exec -a $f $f.raw "$@"
-        [ $((cnt++)) = 8 ] && break;
+        [ $((cnt++)) = 8 ] && { echo not found "$f.raw" 2>&1; break; }
     done
+    false
 }
 
 
@@ -27,7 +33,7 @@ main () {
 
 hjexe_backup() {
     local f raw;
-    test -d $hjhome || mkdir $hjhome
+    test -d $hjhome || mkdir -p $hjhome
     test -e $hjhome/default || { 
 		echo 'echo cd $PWD\; $0 "$@" >> ${BASH_SOURCE%.rc}.log'
 	} >$hjhome/default
@@ -42,12 +48,17 @@ hjexe_backup() {
 }
 
 hjexe_install() {
-    local fpath hpath  default=1
+    local f fpath hpath filehead default=1
+
     while [ $# != 0 ]; do 
-        f=$1;shift
+        f=$1; shift
         [ "${f: -4}" = ".raw" ] && continue;
-        fpath=$(type -P $f)|| continue;
-# [ -e $fpath.raw ] || sudo mv $fpath $fpath.raw 
+        fpath=$(type -P "$f")|| { echo "$f" does not exist in "$PATH"; continue; }
+        read -n2 filehead < $fpath
+        if [ "$filehead" = "#!" ]; then
+            $fpath is script and ignored.
+            continue
+        fi
         if hpath=$(readlink $fpath); then # its symbolic file
             if [[ "${hpath: -4}" != ".raw" &&  "${hpath##*/}" != "${0##*/}" ]]; then
                 sudo mv $fpath $fpath.raw
@@ -56,13 +67,7 @@ hjexe_install() {
             [ -e $fpath.raw ]|| sudo mv $fpath $fpath.raw
         fi
         sudo ln -is $0 $fpath 
-    # had installed
-        if [ ! -e $hjhome/$f.rc ]; then
-            cd $hjhome
-            [ "$default" = 1 ] && ln -s default $f.rc 
-            cd - >/dev/null
-        fi 
-        echo install $f ... ok
+        test ! -e $hjhome/$f.rc && cp $hjhome/default $hjhome/$f.rc 
     done
 }
 
@@ -103,7 +108,7 @@ hjexe_list() {
 
 hjexe_do() {
     cd $hjhome/
-    $1 $2 $3 $4
+    "$@" 
 }
 
 
@@ -138,7 +143,7 @@ hjexe_cfg() {
     esac
 }
 
-hjhome="/home/${SUDO_USER:-$USER}/.hj"
+hjhome="/tmp/${SUDO_USER:-$USER}/.hj"
 if [[ ${0##*/} = hjexe || ${0##*/} = hjexe.sh ]]; then
     hjexe_cfg "$@"
     exit $?
